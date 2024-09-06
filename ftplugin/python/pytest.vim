@@ -10,6 +10,10 @@ if exists("g:loaded_pytest") || &cp
   finish
 endif
 
+if !exists("g:user_flags")
+	let g:user_flags = get(g:, 'pytest_user_flags', '--timeout=1')
+endif
+
 
 " Global variables for registering next/previous error
 let g:pytest_session_errors    = {}
@@ -365,7 +369,7 @@ endfunction
 
 
 function! s:RunInSplitWindow(path)
-    let cmd = g:pytest_executable . " --tb=short " . a:path
+    let cmd = g:pytest_executable .  " " . g:user_flags . " --tb=short " . a:path
     let command = join(map(split(cmd), 'expand(v:val)'))
     let winnr = bufwinnr('PytestVerbose.pytest')
     silent! execute  winnr < 0 ? 'botright new ' . 'PytestVerbose.pytest' : winnr . 'wincmd w'
@@ -566,6 +570,9 @@ endfunction
 
 
 function! s:RunPyTest(path, ...) abort
+    if !exists("g:user_flags")
+	    let g:user_flags = get(g:, 'pytest_user_flags', '--timeout=1')
+    endif
     let parametrized = 0
     let extra_flags = ''
     let job_id = get(b:, 'job_id')
@@ -586,9 +593,10 @@ function! s:RunPyTest(path, ...) abort
     let g:pytest_last_session = ""
 
     if (len(parametrized) && parametrized != "0")
-        let cmd = g:pytest_executable . " -k " . parametrized . " " . extra_flags . " --tb=short " . a:path
+        let cmd = g:pytest_executable . " -k " . parametrized . " " . extra_flags . " " . g:user_flags . " --tb=short " . a:path
     else
-        let cmd = g:pytest_executable . " " . extra_flags . " --tb=short " . a:path
+            let cmd = g:pytest_executable . " " . extra_flags . " " . g:user_flags . " --tb=short " . a:path
+
     endif
 
     " NeoVim support
@@ -1265,14 +1273,14 @@ function! s:Pdb(path, ...)
     if (a:0 >= 2)
       let parametrized = a:2
       if len(a:3)
-        let extra_flags = a:3
+        let extra_flags = a:3 . " " . g:pytest_user_flags
       endif
     endif
 
     if (len(parametrized) && parametrized != "0")
-        let pdb_command = g:pytest_executable . " " . a:1 . " -k " . parametrized . " " . extra_flags . " " . a:path
+        let pdb_command = g:pytest_executable . " " . a:1 . " -k " . parametrized . " " . extra_flags . " " .   user_flags . " " . a:path
     else
-        let pdb_command = g:pytest_executable . " " . a:1 . " " . extra_flags . " " . a:path
+        let pdb_command = g:pytest_executable . " " . a:1 . " " . extra_flags . " " .   user_flags . " " . a:path
     endif
 
     if has('terminal')
